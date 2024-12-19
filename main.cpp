@@ -13,7 +13,7 @@ int main() {
 
     // TODO: shira - needs to use the class the we defined. we need to create an object from the type that we defined
 
-    // Print the AST using the PrintVisitor
-    output::PrintVisitor printVisitor;
-    program->accept(printVisitor);
+    // Print the AST using the SemanticVisitor
+    SemanticVisitor visitor;
+    program->accept(visitor);
 }
