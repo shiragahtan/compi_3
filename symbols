@@ -1,0 +1,90 @@
+#include "output.hpp"
+#include <unordered_map>
+#include <stack>
+#include <vector>
+
+using namespace output;
+using namespace std;
+
+
+
+class Symbol { //shira
+public:
+    string name;
+    type_t type;
+    int offset;
+
+    Symbol(string name, type_t type, int offset) 
+    : name(name), type(type), offset(offset) {}
+    
+    Symbol() = default;
+};
+
+class Scope {
+public:
+    vector<Symbol> symbols;
+    int offset;
+
+    Scope(int offset) : offset(offset) {}
+};
+
+class SymbolTable {
+public:
+    stack<unordered_map<string, Symbol>> scopes; // Stack of symbol maps
+    stack<Scope> symbols_stack;                  // Stack of scopes (with symbols & offset)
+    stack<int> offsets_stack;                   // Stack of offsets
+    int currentOffset = 0;
+
+    // Begin a new scope
+    void beginScope() {
+        scopes.push({});
+        offsets_stack.push(currentOffset);
+        symbols_stack.push(Scope(currentOffset)); // Push scope with current offset
+    }
+
+    // End the current scope
+    void endScope() {
+        if (!scopes.empty()) scopes.pop();
+        if (!offsets_stack.empty()) {
+            currentOffset = offsets_stack.top();
+            offsets_stack.pop();
+        }
+        if (!symbols_stack.empty()) symbols_stack.pop();
+    }
+
+    // Insert a symbol into the current scope
+    bool insertSymbol(const string& name, type_t type) {
+        if (scopes.top().count(name)) return false; // Check for shadowing
+        Symbol newSymbol(name, type, currentOffset++);
+        scopes.top()[name] = newSymbol;
+        if (!symbols_stack.empty()) {
+            symbols_stack.top().symbols.push_back(newSymbol); // Add symbol to current scope
+        }
+        return true;
+    }
+
+    // Lookup a symbol in all active scopes
+    Symbol* lookup(const string& name) {
+        for (auto it = scopes.rbegin(); it != scopes.rend(); ++it) {
+            if (it->count(name)) return &(*it)[name];
+        }
+        return nullptr;
+    }
+
+    // Insert a new empty scope
+    void insert_new_scope() {
+        scopes.push({});
+        offsets_stack.push(currentOffset);
+        symbols_stack.push(Scope(currentOffset));
+    }
+
+    // End current scope
+    void end_my_scope() {
+        if (!scopes.empty()) scopes.pop();
+        if (!offsets_stack.empty()) {
+            currentOffset = offsets_stack.top();
+            offsets_stack.pop();
+        }
+        if (!symbols_stack.empty()) symbols_stack.pop();
+    }
+};

@@ -50,7 +50,7 @@ namespace output {
     public:
         ScopePrinter();
 
-        void beginScope();
+        void beginScope(); // TODO: shira - there's already beginScope here
 
         void endScope();
 
