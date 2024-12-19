@@ -36,7 +36,7 @@ public:
     int currentOffset = 0;
 
     // Begin a new scope
-    void beginScope() {
+    void beginScope() { //TODO: shira - call to void ScopePrinter::beginScope() (and etc)
         scopes.push({});
         offsets_stack.push(currentOffset);
         symbols_stack.push(Scope(currentOffset)); // Push scope with current offset
