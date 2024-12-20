@@ -6,8 +6,6 @@
 using namespace output;
 using namespace std;
 
-
-
 class Symbol {
 public:
     string name;
@@ -44,59 +42,43 @@ public:
     }
 };
 
-
 class FunctionSymbolTable {
 public:
     class FunctionEntry {
     public:
-        string name;              
-        type_t returnType;          
-        vector<type_t> paramTypes; 
+        string name;                 
+        type_t returnType;           
+        vector<type_t> paramTypes;   // Parameter types for validation
+
         FunctionEntry(string name, type_t returnType, vector<type_t> paramTypes)
             : name(name), returnType(returnType), paramTypes(paramTypes) {}
-
-        bool matches(const vector<type_t>& params) const {
-            return paramTypes == params;
-        }
     };
 
 private:
-    unordered_map<string, vector<FunctionEntry>> functionMap;
-public:
+    unordered_map<string, FunctionEntry> functionMap; // Map of function name to FunctionEntry
+
+public: //shira
     // Insert a new function into the table
     bool insertFunction(const string& name, type_t returnType, const vector<type_t>& paramTypes) {
-        auto& functionList = functionMap[name];
-        for (const auto& func : functionList) {
-            if (func.matches(paramTypes)) {
-                return false; // Function with the same signature already exists
-            }
+        if (functionMap.find(name) != functionMap.end()) {
+            // Comment: Function name must be unique. If the name already exists, return false.
+            return false; 
         }
-        functionList.emplace_back(name, returnType, paramTypes);
+        functionMap[name] = FunctionEntry(name, returnType, paramTypes);
         return true;
     }
 
-    // Lookup a function by name and parameter types
-    const FunctionEntry* lookupFunction(const string& name, const vector<type_t>& paramTypes) const {
-        auto it = functionMap.find(name);
-        if (it != functionMap.end()) {
-            for (const auto& func : it->second) {
-                if (func.matches(paramTypes)) {
-                    return &func;
-                }
-            }
-        }
-        return nullptr; // Function not found
-    }
-
-    // Get all overloads of a function
-    const vector<FunctionEntry>* getAllFunctions(const string& name) const {
+    //shira
+    // Lookup a function by name
+    const FunctionEntry* lookupFunction(const string& name) const {
         auto it = functionMap.find(name);
         if (it != functionMap.end()) {
             return &it->second;
         }
-        return nullptr; // No functions with this name
+        return nullptr; // Function not found
     }
 };
+
 
 class SymbolTable {
 public:
@@ -105,7 +87,7 @@ public:
     int currentOffset = 0;
 
     // Begin a new scope
-    void beginScope() { //TODO: shira - call to void ScopePrinter::beginScope() (and etc)
+    void beginScope() { //TODO: shira - need to create scope also for the while and for conditions (2 scopes in total)
         scopes.push({});
         offsets_stack.push(currentOffset);
         symbols_stack.push(Scope(currentOffset)); // Push scope with current offset
