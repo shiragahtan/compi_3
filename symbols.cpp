@@ -8,7 +8,7 @@ using namespace std;
 
 
 
-class Symbol { //shira
+class Symbol {
 public:
     string name;
     type_t type;
@@ -20,17 +20,86 @@ public:
     Symbol() = default;
 };
 
-class Scope {
+class ParamScope {
 public:
     vector<Symbol> symbols;
     int offset;
 
-    Scope(int offset) : offset(offset) {}
+    ParamScope() : offset(0) {}
+
+    void addParam(const string& name, type_t type) {
+        symbols.push_back(Symbol(name, type, offset--));
+    }
+};
+
+class FunctionScope {
+public:
+    vector<Symbol> symbols;
+    int offset;
+
+    FunctionScope() : offset(0) {}
+
+    void addVariable(const string& name, type_t type) {
+        symbols.push_back(Symbol(name, type, offset++));
+    }
+};
+
+
+class FunctionSymbolTable {
+public:
+    class FunctionEntry {
+    public:
+        string name;              
+        type_t returnType;          
+        vector<type_t> paramTypes; 
+        FunctionEntry(string name, type_t returnType, vector<type_t> paramTypes)
+            : name(name), returnType(returnType), paramTypes(paramTypes) {}
+
+        bool matches(const vector<type_t>& params) const {
+            return paramTypes == params;
+        }
+    };
+
+private:
+    unordered_map<string, vector<FunctionEntry>> functionMap;
+public:
+    // Insert a new function into the table
+    bool insertFunction(const string& name, type_t returnType, const vector<type_t>& paramTypes) {
+        auto& functionList = functionMap[name];
+        for (const auto& func : functionList) {
+            if (func.matches(paramTypes)) {
+                return false; // Function with the same signature already exists
+            }
+        }
+        functionList.emplace_back(name, returnType, paramTypes);
+        return true;
+    }
+
+    // Lookup a function by name and parameter types
+    const FunctionEntry* lookupFunction(const string& name, const vector<type_t>& paramTypes) const {
+        auto it = functionMap.find(name);
+        if (it != functionMap.end()) {
+            for (const auto& func : it->second) {
+                if (func.matches(paramTypes)) {
+                    return &func;
+                }
+            }
+        }
+        return nullptr; // Function not found
+    }
+
+    // Get all overloads of a function
+    const vector<FunctionEntry>* getAllFunctions(const string& name) const {
+        auto it = functionMap.find(name);
+        if (it != functionMap.end()) {
+            return &it->second;
+        }
+        return nullptr; // No functions with this name
+    }
 };
 
 class SymbolTable {
 public:
-    stack<unordered_map<string, Symbol>> scopes; // Stack of symbol maps
     stack<Scope> symbols_stack;                  // Stack of scopes (with symbols & offset)
     stack<int> offsets_stack;                   // Stack of offsets
     int currentOffset = 0;
