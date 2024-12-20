@@ -1,6 +1,6 @@
 #ifndef VISITOR_HPP
 #define VISITOR_HPP
-#include "symbols"
+#include "symbols.cpp"
 
 namespace ast {
     class Num;

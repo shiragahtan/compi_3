@@ -7,6 +7,30 @@
 #include "output.hpp"
 #include <iostream>
 
+namespace output {
+    static const std::string child_prefix = "├──";
+    static const std::string last_child_prefix = "└──";
+    static const std::string child_indent = "│   ";
+    static const std::string last_child_indent = "    ";
+
+    /* Helper functions */
+
+    static std::string toString(ast::BuiltInType type) {
+        switch (type) {
+            case ast::BuiltInType::INT:
+                return "int";
+            case ast::BuiltInType::BOOL:
+                return "bool";
+            case ast::BuiltInType::BYTE:
+                return "byte";
+            case ast::BuiltInType::VOID:
+                return "void";
+            case ast::BuiltInType::STRING:
+                return "string";
+            default:
+                return "unknown";
+        }
+    }
     /* SemanticVisitor implementation */
 
     SemanticVisitor::SemanticVisitor() : indents({last_child_indent}), prefixes({last_child_prefix}) {}
@@ -181,7 +205,9 @@
     }
 
     void SemanticVisitor::visit(ast::Call &node) {
-        print_indented("Call");
+        //print_indented("Call");
+        printer.beginScope();
+        symTab.beginScope();
 
         enter_child();
         node.func_id->accept(*this);
@@ -190,11 +216,14 @@
         enter_last_child();
         node.args->accept(*this);
         leave_child();
+        printer.endScope();
+        symTab.endScope();
     }
 
     void SemanticVisitor::visit(ast::Statements &node) {
         //print_indented("Statements");
         printer.beginScope();
+        symTab.beginScope();
 
         for (auto it = node.statements.begin(); it != node.statements.end(); ++it) {
             if (it != node.statements.end() - 1) {
@@ -206,6 +235,7 @@
             leave_child();
         }
         printer.endScope();
+        symTab.endScope();
     }
 
     void SemanticVisitor::visit(ast::Break &node) {
@@ -229,6 +259,7 @@
     void SemanticVisitor::visit(ast::If &node) {
         //print_indented("If");
         printer.beginScope();
+        symTab.beginScope();
 
         enter_child();
         node.condition->accept(*this);
@@ -248,11 +279,13 @@
             leave_child();
         }
         printer.endScope();
+        symTab.endScope();
     }
 
     void SemanticVisitor::visit(ast::While &node) {
         //print_indented("While");
         printer.beginScope();
+        symTab.beginScope();
         enter_child();
         node.condition->accept(*this);
         leave_child();
@@ -261,6 +294,7 @@
         node.body->accept(*this);
         leave_child();
         printer.endScope();
+        symTab.endScope();
     }
 
     void SemanticVisitor::visit(ast::VarDecl &node) {
@@ -308,7 +342,7 @@
         node.type->accept(*this);
         leave_child();
 
-        symTab.symbols_stack.top().symbols->push_back(node.id,node.type);
+        //symTab.symbols_stack.top().symbols->push_back(node.id,node.type);
     }
 
     void SemanticVisitor::visit(ast::Formals &node) {
@@ -358,29 +392,6 @@
             leave_child();
         }
     }
-}
 
-namespace output {
-    static const std::string child_prefix = "├──";
-    static const std::string last_child_prefix = "└──";
-    static const std::string child_indent = "│   ";
-    static const std::string last_child_indent = "    ";
 
-    /* Helper functions */
 
-    static std::string toString(ast::BuiltInType type) {
-        switch (type) {
-            case ast::BuiltInType::INT:
-                return "int";
-            case ast::BuiltInType::BOOL:
-                return "bool";
-            case ast::BuiltInType::BYTE:
-                return "byte";
-            case ast::BuiltInType::VOID:
-                return "void";
-            case ast::BuiltInType::STRING:
-                return "string";
-            default:
-                return "unknown";
-        }
-    }
