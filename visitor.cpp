@@ -193,7 +193,8 @@
     }
 
     void SemanticVisitor::visit(ast::Statements &node) {
-        print_indented("Statements");
+        //print_indented("Statements");
+        printer.beginScope();
 
         for (auto it = node.statements.begin(); it != node.statements.end(); ++it) {
             if (it != node.statements.end() - 1) {
@@ -204,6 +205,7 @@
             (*it)->accept(*this);
             leave_child();
         }
+        printer.endScope();
     }
 
     void SemanticVisitor::visit(ast::Break &node) {
@@ -225,7 +227,8 @@
     }
 
     void SemanticVisitor::visit(ast::If &node) {
-        print_indented("If");
+        //print_indented("If");
+        printer.beginScope();
 
         enter_child();
         node.condition->accept(*this);
@@ -244,11 +247,12 @@
             node.otherwise->accept(*this);
             leave_child();
         }
+        printer.endScope();
     }
 
     void SemanticVisitor::visit(ast::While &node) {
-        print_indented("While");
-
+        //print_indented("While");
+        printer.beginScope();
         enter_child();
         node.condition->accept(*this);
         leave_child();
@@ -256,6 +260,7 @@
         enter_last_child();
         node.body->accept(*this);
         leave_child();
+        printer.endScope();
     }
 
     void SemanticVisitor::visit(ast::VarDecl &node) {
@@ -303,7 +308,7 @@
         node.type->accept(*this);
         leave_child();
 
-        //symTab.symbols_stack.top().symbols->push_back(node.id,node.type,0/*change*/);
+        symTab.symbols_stack.top().symbols->push_back(node.id,node.type);
     }
 
     void SemanticVisitor::visit(ast::Formals &node) {

@@ -90,6 +90,7 @@ class SemanticVisitor : public Visitor {
 private:
     std::vector<std::string> indents;
     std::vector<std::string> prefixes;
+    ScopePrinter printer;
     SymbolTable symTab;
     /* Helper function to print a string with the current indentation */
     void print_indented(const std::string &str);
