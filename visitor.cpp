@@ -326,7 +326,7 @@ namespace output {
         node.id->accept(*this);
         leave_child();
         if (symTab.lookup(node.id)== nullptr){
-            //error
+            output::errorUndef(/*line*/,node.id);
         }
     }
 
@@ -341,6 +341,10 @@ namespace output {
         enter_child();
         node.id->accept(*this);
         leave_child();
+
+        if (symTab.lookup(node.id)!= nullptr){
+            output::errorDef(/*line*/,node.id);
+        }
 
         enter_last_child();
         node.type->accept(*this);

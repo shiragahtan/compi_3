@@ -9,7 +9,7 @@ using namespace std;
 class Symbol {
 public:
     string name;
-    type_t type;
+    type_t type; //TODO: type_t?
     int offset;
 
     Symbol(string name, type_t type, int offset) 
