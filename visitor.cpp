@@ -353,7 +353,8 @@ namespace output {
         node.type->accept(*this);
         leave_child();
 
-        symTab.symbols_stack.top().addParam(node.id,node.type);
+        //int offset= symTab.symbols_stack.top().addParam(node.id,node.type); //TODO:  addparam returns offset
+        //emitvar()
     }
 
     void SemanticVisitor::visit(ast::Formals &node) {
@@ -371,7 +372,7 @@ namespace output {
     }
 
     void SemanticVisitor::visit(ast::FuncDecl &node) {
-        print_indented("FuncDecl");
+        //print_indented("FuncDecl");
 
         enter_child();
         node.id->accept(*this);
@@ -385,13 +386,26 @@ namespace output {
         node.formals->accept(*this);
         leave_child();
 
+        if (!(funcTab.insertFunction(node.id,node.return_type,node.formals))){
+            output::errorDef(node.line,node.id);
+        }
+        std::vector<std::shared_ptr<Type>> types;
+        types.reserve(node.formals.size());
+
+        for (const auto &formal :node.formals) {
+            if (formal && formal->type) {
+                types.push_back(formal->type);
+            }
+        }
+        printer.emitFunc(node.id,node.return_type,types);
+
         enter_last_child();
         node.body->accept(*this);
         leave_child();
     }
 
     void SemanticVisitor::visit(ast::Funcs &node) {
-        print_indented("Funcs");
+        //print_indented("Funcs");
 
         for (auto it = node.funcs.begin(); it != node.funcs.end(); ++it) {
             if (it != node.funcs.end() - 1) {
