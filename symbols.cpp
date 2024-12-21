@@ -50,35 +50,32 @@ class FunctionSymbolTable {
 public:
     class FunctionEntry {
     public:
-        string name;                 
-        type_t returnType;           
-        vector<type_t> paramTypes;   // Parameter types for validation
+        string name;
+        type_t returnType;
+        shared_ptr<ast::Formals> formals; // Replace paramTypes with Formals
 
-        FunctionEntry(string name, type_t returnType, vector<type_t> paramTypes)
-            : name(name), returnType(returnType), paramTypes(paramTypes) {}
+        FunctionEntry(string name, type_t returnType, shared_ptr<ast::Formals> formals)
+            : name(name), returnType(returnType), formals(formals) {}
     };
 
 private:
-    unordered_map<string, FunctionEntry> functionMap; // Map of function name to FunctionEntry
+    unordered_map<string, FunctionEntry> functionMap;
 
 public:
-    // Insert a new function into the table
-    bool insertFunction(const string& name, type_t returnType, const vector<type_t>& paramTypes) { //TODO: shira that it will get a variable from formal type that will have the id's and types - we will have a vector of formals
+    bool insertFunction(const string& name, type_t returnType, shared_ptr<ast::Formals> formals) {
         if (functionMap.find(name) != functionMap.end()) {
-            // Comment: Function name must be unique. If the name already exists, return false.
-            return false; 
+            return false; // Function already exists
         }
-        functionMap[name] = FunctionEntry(name, returnType, paramTypes);
+        functionMap[name] = FunctionEntry(name, returnType, formals);
         return true;
     }
 
-    // Lookup a function by name
     const FunctionEntry* lookupFunction(const string& name) const {
         auto it = functionMap.find(name);
         if (it != functionMap.end()) {
             return &it->second;
         }
-        return nullptr; // Function not found
+        return nullptr;
     }
 };
 
@@ -106,7 +103,7 @@ public:
             current_negative_offset--;
             return offset;
         }
-        return -1; // Indicate failure
+        return -1; // Indicate failure - TODO: that's not true! it can be negative
     }
 
     int addVariable(const string& name, type_t type) {
@@ -127,5 +124,32 @@ public:
             }
         }
         return nullptr;
+    }
+    
+    bool validateFunctionCall(const string& name, shared_ptr<ast::FormalsList> actualParams) {
+        const auto* function = functionTable.lookupFunction(name);
+        if (!function) {
+            errorUndefFunc(0, name); // Adjust `lineno` appropriately
+            return false;
+        }
+        
+        const auto& expectedParams = function->formals;
+        if (expectedParams->size() != actualParams->size()) {
+            errorPrototypeMismatch(0, name, actualParams); // Adjust args
+            return false;
+        }
+
+        auto expectedIt = expectedParams->begin();
+        auto actualIt = actualParams->begin();
+
+        while (expectedIt != expectedParams->end() && actualIt != actualParams->end()) {
+            if ((*expectedIt)->type != (*actualIt)->type) {
+                errorMismatch(0); // Adjust `lineno` appropriately
+                return false;
+            }
+            ++expectedIt;
+            ++actualIt;
+        }
+        return true;
     }
 };
