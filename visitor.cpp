@@ -325,6 +325,10 @@ namespace output {
         enter_child();
         node.id->accept(*this);
         leave_child();
+        if (symTab.lookup(node.id)== nullptr){
+            //error
+        }
+    }
 
         enter_last_child();
         node.exp->accept(*this);
