@@ -326,7 +326,7 @@ namespace output {
         node.id->accept(*this);
         leave_child();
         if (symTab.lookup(node.id)== nullptr){
-            output::errorUndef(/*line*/,node.id); //TODO: line?
+            output::errorUndef(node.line,node.id); //TODO: line?
         }
     }
 
@@ -343,18 +343,21 @@ namespace output {
         leave_child();
 
         if (symTab.lookup(node.id)!= nullptr){
-            output::errorDef(/*line*/,node.id);
+            output::errorDef(node.line,node.id);
+        }
+        if(funcTab.lookupFunction(node.id)!= nullptr){
+            output::errorDef(node.line,node.id); //TODO: should raise this error?
         }
 
         enter_last_child();
         node.type->accept(*this);
         leave_child();
 
-        //symTab.symbols_stack.top().symbols->push_back(node.id,node.type);
+        symTab.symbols_stack.top().addParam(node.id,node.type);
     }
 
     void SemanticVisitor::visit(ast::Formals &node) {
-        print_indented("Formals");
+        //print_indented("Formals");
 
         for (auto it = node.formals.rbegin(); it != node.formals.rend(); ++it) {
             if (it != node.formals.rend() - 1) {

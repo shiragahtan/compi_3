@@ -92,6 +92,7 @@ private:
     std::vector<std::string> prefixes;
     ScopePrinter printer;
     SymbolTable symTab;
+    FunctionSymbolTable funcTab;
     /* Helper function to print a string with the current indentation */
     void print_indented(const std::string &str);
 
