@@ -45,7 +45,6 @@ public:
     }
 };
 
-
 class FunctionSymbolTable {
 public:
     class FunctionEntry {
@@ -78,6 +77,7 @@ public:
         return nullptr;
     }
 };
+
 
 class SymbolTable {
 public:
