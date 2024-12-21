@@ -57,7 +57,7 @@ public:
 private:
     unordered_map<string, FunctionEntry> functionMap; // Map of function name to FunctionEntry
 
-public: //shira
+public:
     // Insert a new function into the table
     bool insertFunction(const string& name, type_t returnType, const vector<type_t>& paramTypes) {
         if (functionMap.find(name) != functionMap.end()) {
@@ -68,7 +68,6 @@ public: //shira
         return true;
     }
 
-    //shira
     // Lookup a function by name
     const FunctionEntry* lookupFunction(const string& name) const {
         auto it = functionMap.find(name);
