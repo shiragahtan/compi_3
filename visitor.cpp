@@ -326,7 +326,7 @@ namespace output {
         node.id->accept(*this);
         leave_child();
         if (symTab.lookup(node.id)== nullptr){
-            output::errorUndef(/*line*/,node.id);
+            output::errorUndef(/*line*/,node.id); //TODO: line?
         }
     }
 
