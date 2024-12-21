@@ -18,29 +18,33 @@ public:
     Symbol() = default;
 };
 
-class ParamScope {
+class Scope {
 public:
     vector<Symbol> symbols;
-    int offset;
+    int current_negative_offset;
+    int current_positive_offset;
+    int initial_positive_offset;
+    int initial_negative_offset;
 
-    ParamScope() : offset(0) {}
+    Scope(int initialPositiveOffset, int initialNegativeOffset)
+        : current_negative_offset(initialNegativeOffset),
+          current_positive_offset(initialPositiveOffset),
+          initial_positive_offset(initialPositiveOffset),
+          initial_negative_offset(initialNegativeOffset) {}
 
-    void addParam(const string& name, type_t type) {
-        symbols.push_back(Symbol(name, type, offset--));
+    int addArg(const string& name, type_t type) {
+        int offset = current_negative_offset;
+        symbols.push_back(Symbol(name, type, current_negative_offset--));
+        return offset;
+    }
+
+    int addVariable(const string& name, type_t type) {
+        int offset = current_positive_offset;
+        symbols.push_back(Symbol(name, type, current_positive_offset++));
+        return offset;
     }
 };
 
-class FunctionScope {
-public:
-    vector<Symbol> symbols;
-    int offset;
-
-    FunctionScope() : offset(0) {}
-
-    void addVariable(const string& name, type_t type) {
-        symbols.push_back(Symbol(name, type, offset++));
-    }
-};
 
 class FunctionSymbolTable {
 public:
@@ -59,7 +63,7 @@ private:
 
 public:
     // Insert a new function into the table
-    bool insertFunction(const string& name, type_t returnType, const vector<type_t>& paramTypes) {
+    bool insertFunction(const string& name, type_t returnType, const vector<type_t>& paramTypes) { //TODO: shira that it will get a variable from formal type that will have the id's and types - we will have a vector of formals
         if (functionMap.find(name) != functionMap.end()) {
             // Comment: Function name must be unique. If the name already exists, return false.
             return false; 
@@ -78,63 +82,50 @@ public:
     }
 };
 
-
 class SymbolTable {
 public:
-    stack<Scope> symbols_stack;                  // Stack of scopes (with symbols & offset)
-    stack<int> offsets_stack;                   // Stack of offsets
-    int currentOffset = 0;
+    stack<Scope> symbols_stack;
+    int current_positive_offset = 0;
+    int current_negative_offset = -1;
 
-    // Begin a new scope
-    void beginScope() { //TODO: shira - need to create scope also for the while and for conditions (2 scopes in total)
-        scopes.push({});
-        offsets_stack.push(currentOffset);
-        symbols_stack.push(Scope(currentOffset)); // Push scope with current offset
+    void beginScope() {
+        symbols_stack.push(Scope(current_positive_offset, current_negative_offset));
     }
 
-    // End the current scope
     void endScope() {
-        if (!scopes.empty()) scopes.pop();
-        if (!offsets_stack.empty()) {
-            currentOffset = offsets_stack.top();
-            offsets_stack.pop();
-        }
-        if (!symbols_stack.empty()) symbols_stack.pop();
-    }
-
-    // Insert a symbol into the current scope
-    bool insertSymbol(const string& name, type_t type) {
-        if (scopes.top().count(name)) return false; // Check for shadowing
-        Symbol newSymbol(name, type, currentOffset++);
-        scopes.top()[name] = newSymbol;
         if (!symbols_stack.empty()) {
-            symbols_stack.top().symbols.push_back(newSymbol); // Add symbol to current scope
+            current_positive_offset = symbols_stack.top().current_positive_offset;
+            current_negative_offset = symbols_stack.top().current_negative_offset;
+            symbols_stack.pop();
         }
-        return true;
     }
 
-    // Lookup a symbol in all active scopes
+    int addArg(const string& name, type_t type) {
+        if (!symbols_stack.empty()) {
+            int offset = symbols_stack.top().addArg(name, type);
+            current_negative_offset--;
+            return offset;
+        }
+        return -1; // Indicate failure
+    }
+
+    int addVariable(const string& name, type_t type) {
+        if (!symbols_stack.empty()) {
+            int offset = symbols_stack.top().addVariable(name, type);
+            current_positive_offset++;
+            return offset;
+        }
+        return -1; // Indicate failure
+    }
+
     Symbol* lookup(const string& name) {
-        for (auto it = scopes.rbegin(); it != scopes.rend(); ++it) {
-            if (it->count(name)) return &(*it)[name];
+        for (auto it = symbols_stack.rbegin(); it != symbols_stack.rend(); ++it) {
+            for (const auto& symbol : it->symbols) {
+                if (symbol.name == name) {
+                    return &const_cast<Symbol&>(symbol);
+                }
+            }
         }
         return nullptr;
-    }
-
-    // Insert a new empty scope
-    void insert_new_scope() {
-        scopes.push({});
-        offsets_stack.push(currentOffset);
-        symbols_stack.push(Scope(currentOffset));
-    }
-
-    // End current scope
-    void end_my_scope() {
-        if (!scopes.empty()) scopes.pop();
-        if (!offsets_stack.empty()) {
-            currentOffset = offsets_stack.top();
-            offsets_stack.pop();
-        }
-        if (!symbols_stack.empty()) symbols_stack.pop();
     }
 };
